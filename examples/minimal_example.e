@@ -1,11 +1,12 @@
+note
+	description: "Simple integer counter."
+
 class
 	COUNTER
 
 create
 	make
 
-note
-	description: "Simple integer counter."
 
 feature -- Initialization
 

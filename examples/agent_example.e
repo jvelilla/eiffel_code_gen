@@ -1,11 +1,11 @@
+note
+	description: "Uses agents for deferred execution."
+
 class
 	WORKER
 
 create
 	make
-
-note
-	description: "Uses agents for deferred execution."
 
 feature -- Initialization
 

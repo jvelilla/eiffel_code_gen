@@ -1,11 +1,11 @@
+note
+	description: "Template class."
+
 class
 	CLASS_NAME
 
 create
 	make
-
-note
-	description: "Template class."
 
 feature -- Initialization
 
