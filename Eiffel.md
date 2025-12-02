@@ -589,7 +589,7 @@ Agents provide a mechanism for representing routines as objects, enabling deferr
 
 An agent is an object that represents a routine (procedure or function). Agents are instances of:
 - `PROCEDURE [TUPLE [...]]` - for procedures
-- `FUNCTION [T, TUPLE [...]]` - for functions returning type `T`
+- `FUNCTION [TUPLE [...], T]` - for functions returning type `T`
 - `PREDICATE [TUPLE [...]]` - for boolean functions (predicates)
 
 **Basic Syntax:**
@@ -611,6 +611,16 @@ apply_twice (f: FUNCTION [INTEGER, INTEGER]; x: INTEGER): INTEGER
 		Result := f.item (f.item (x))
 	end
 ```
+
+is a short-hand for:
+
+```eiffel
+apply_twice (f: FUNCTION [TUPLE [INTEGER], INTEGER]; x: INTEGER): INTEGER
+		-- Apply agent `f` twice to `x`.
+	do
+		Result := f.item ([f.item ([x])])
+	end
+```	
 
 ### Open and Closed Arguments
 
@@ -767,7 +777,72 @@ integrator.integrate (agent function3 (3.5, ?, 6.0), 0.0, 1.0)
 
 ---
 
-# 12. Prohibited Patterns
+
+# 12. How to write comments
+
+
+### a. **Markup Syntax**
+- **Class references**: Wrap class names in braces  
+  Example:  
+  ```eiffel
+  -- See {DEBUG_OUTPUT} for more information.
+  ```
+- **Feature references (same class or parent)**: Use double back quotes  
+  Example:  
+  ```eiffel
+  -- See `debug_output` for more information.
+  ```
+- **Feature references from another class**: Combine class markup with feature name  
+  Example:  
+  ```eiffel
+  -- See {DEBUG_OUTPUT}.debug_output for more information.
+  ```
+
+### b. **Precursor Comments**
+- Use `-- <Precursor>` to inherit parent feature comments when redefining.  
+- This avoids duplication and ensures consistency.  
+- Example:  
+  ```eiffel
+  test (a_arg: INTEGER): BOOLEAN
+      -- <Precursor>
+  do
+  end
+  ```
+
+### c. **Comment Augmentation**
+- Add extra notes before or after `-- <Precursor>`.  
+- Keep `-- <Precursor>` on its own line for clarity.  
+- Example:  
+  ```eiffel
+  test (a_arg: INTEGER): BOOLEAN
+      -- Comments before the original comments from {BASE}.
+      -- <Precursor>
+      -- Some additional comments.
+  do
+  end
+  ```
+
+### d. **Multiple Redefinitions**
+- When inheriting from multiple parents, specify the source class explicitly:  
+  ```eiffel
+  f (a_arg: INTEGER): BOOLEAN
+      -- <Precursor {BASE}>
+  do
+  end
+  ```
+- If the class is incorrect, EiffelStudio will warn:  
+  ```
+  -- Unable to retrieve the comments from redefinition of {CLASS_NAME}.
+  ```
+
+### e. **Documentation Integration**
+- Precursor comments are supported in all EiffelStudio tools (Contract Viewer, Feature Relation Tool, documentation generators).  
+- Using `-- <Precursor>` ensures inherited documentation is visible and consistent.
+
+**Reference:** [Eiffel Code  Comments](https://www.eiffel.org/doc/eiffel/Eiffel_Code_Comments)
+---
+
+# 13. Prohibited Patterns
 
 LLM MUST NEVER:
 
@@ -782,13 +857,13 @@ LLM MUST NEVER:
 
 ---
 
-# 13. Ask Before Coding
+# 14. Ask Before Coding
 
 If the spec is ambiguous, the model must ask clarifying questions before generating Eiffel code.
 
 ---
 
-# 14. Final Checklist (LLM MUST verify before generating)
+# 15. Final Checklist (LLM MUST verify before generating)
 
 - [ ] Class name is UPPERCASE  
 - [ ] Feature names in snake_case  
@@ -807,7 +882,7 @@ If the spec is ambiguous, the model must ask clarifying questions before generat
 
 ---
 
-# 15. Example (Reference)
+# 16. Example (Reference)
 
 ```eiffel
 class
@@ -844,7 +919,7 @@ feature -- Access
 feature -- Element Change
 
 	set_age (new_age: INTEGER)
-			-- Set age to `new_age`.
+			-- Set `age` to `new_age`.
 		require
 			age_non_negative: new_age >= 0
 		do
