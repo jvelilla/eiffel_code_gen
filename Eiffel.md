@@ -430,7 +430,7 @@ find_index (target: INTEGER): INTEGER
 			valid_range: i >= 1 and i <= array.count + 1
 			not_found_yet: Result = -1 implies (∀ j: 1 |..| (i - 1) ¦ array [j] /= target)
 		variant
-			array.count + 1 - i
+			remaining_elements: array.count + 1 - i
 		until
 			i > array.count or Result >= 0
 		loop
@@ -852,7 +852,19 @@ LLM MUST NEVER:
 
 - Generate camelCase or mixed styles  
 - Auto-format with spaces instead of TABs  
-- Use pseudo-Eiffel (`:=`, `{}`, `[]`)  
+- Use pseudo-Eiffel syntax patterns (incorrect syntax that resembles Eiffel but is invalid):
+  - **Incorrect type annotations**: 
+    -  WRONG: `{}`, `{ }`, `{TYPE}` (with spaces or empty)
+    - CORRECT: `{STRING}`, `{LIST [INTEGER]}`, `{ARRAY [G]}`
+  - **Incorrect generic syntax**: 
+    -  WRONG: `LIST[]`, `ARRAY[STRING]` (no space before bracket), `[]` (empty generics)
+    -  CORRECT: `LIST [INTEGER]`, `ARRAY [STRING]`, `HASH_TABLE [STRING, INTEGER]` (space before bracket required)
+  - **Mixed-language patterns**: 
+    -  WRONG: `null`, `==`, `!=`, `&&`, `||`, `.equals()`, `->`
+    -  CORRECT: `Void`, `=`, `/=`, `and`, `or`, `.is_equal`, `.`
+  - **Invalid assignment or expression patterns**: 
+    -  WRONG: Using `:=` in function return statements, using `return` keyword, using `;` as statement separator
+    - CORRECT: `Result := value` in functions, no `return` keyword, no statement separators needed  
 - Use `null` instead of `Void`  
 - Output routines without contracts (except trivial once constants)  
 - Mix other languages into Eiffel blocks  
