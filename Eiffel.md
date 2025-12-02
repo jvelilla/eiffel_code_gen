@@ -565,7 +565,7 @@ feature -- Element Change
 		end
 
 invariant
-	no_duplicates: ∀ i, j: 1 |..| list.count ¦ (i /= j ⇒ list [i] /= list [j])
+	no_duplicates: ∀ i: 1 |..| list.count ¦ (∀ j: 1 |..| list.count ¦ (i /= j ⇒ list [i] /= list [j]))
 ```
 
 **Rules:**
@@ -621,6 +621,10 @@ apply_twice (f: FUNCTION [TUPLE [INTEGER], INTEGER]; x: INTEGER): INTEGER
 		Result := f.item ([f.item ([x])])
 	end
 ```	
+
+### Tuple Type Unfolding and Agent Calls Source Reference: ECMA-367, Section 8.16 (Tuples)
+
+To be completed.
 
 ### Open and Closed Arguments
 
