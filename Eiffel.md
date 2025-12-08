@@ -622,9 +622,10 @@ apply_twice (f: FUNCTION [TUPLE [INTEGER], INTEGER]; x: INTEGER): INTEGER
 	end
 ```	
 
-### Tuple Type Unfolding and Agent Calls Source Reference: ECMA-367, Section 8.16 (Tuples)
+### Tuple Type Unfolding and Agent Calls 
+**Source Reference:** ECMA-367, Section 8.16 (Tuples)
 
-To be completed.
+The shorthand syntax without explicit tuples is allowed because of tuple type unfolding. When calling an agent, arguments are implicitly wrapped in a tuple if needed. This applies to both open and closed arguments in agent definitions and calls.
 
 ### Open and Closed Arguments
 
@@ -649,8 +650,15 @@ agent routine_name (25, 32)
 	-- Call with: agent_object.call ([])
 ```
 
+When all arguments are open, the arguments can be omitted (recommended):
+```eiffel
+agent f (?, ?, ?)  -- All open
+agent f            -- Recommended shorthand for all open
+```
+
 **Type Rules:**
-- The agent type is determined by the **open arguments only**
+- The agent type is determined by the **open arguments and open targets**
+- When an open target is used, the type of the target appears first in the TUPLE type.
 - `agent record_city (name, population, ?, ?)` has type `PROCEDURE [TUPLE [INTEGER, INTEGER]]`
 - A completely closed agent has type `PROCEDURE [TUPLE]` (empty tuple)
 
@@ -774,7 +782,7 @@ integrator.integrate (agent function3 (3.5, ?, 6.0), 0.0, 1.0)
 - Use `?` to denote open arguments
 - Use `{TYPE}.feature_name` for open targets
 - Inline agents cannot access enclosing routine's local variables
-- Agent types are determined by open arguments only
+- Agent types are determined by open arguments and open targets
 - Use `call` for procedures, `item` for functions
 
 **Reference:** [Eiffel Agents Tutorial](https://www.eiffel.org/doc/eiffel/ET-_Agents)
@@ -864,7 +872,7 @@ LLM MUST NEVER:
     -  CORRECT: `Void`, `=`, `/=`, `and`, `or`, `.is_equal`, `.`
   - **Invalid assignment or expression patterns**: 
     -  WRONG: Using `:=` in function return statements, using `return` keyword, using `;` as statement separator
-    - CORRECT: `Result := value` in functions, no `return` keyword, no statement separators needed  
+    -  CORRECT: `Result := value` in functions, no `return` keyword, no statement separators needed  
 - Use `null` instead of `Void`  
 - Output routines without contracts (except trivial once constants)  
 - Mix other languages into Eiffel blocks  
@@ -949,4 +957,3 @@ invariant
 
 end
 ```
-
