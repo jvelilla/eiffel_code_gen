@@ -906,17 +906,317 @@ If the spec is ambiguous, the model must ask clarifying questions before generat
 
 ---
 
-# 16. Example (Reference)
+# 16. Working with Strings
+
+Eiffel provides multiple string classes to handle different character encodings and mutability requirements. Understanding when to use each type is essential for writing correct and efficient string-handling code.
+
+## String Type Hierarchy
+
+### a. **READABLE_STRING_GENERAL**
+- **Description:** Ancestor of all string variants (mutable, immutable, 8-bit, 32-bit)
+- **Use when:** A feature needs to accept **any** string variant as a formal argument
+- **Example:**
+```eiffel
+process_text (text: READABLE_STRING_GENERAL)
+		-- Process any string type.
+	do
+		-- Can handle STRING_8, STRING_32, IMMUTABLE_STRING_8, etc.
+	end
+```
+
+### b. **READABLE_STRING_32**
+- **Description:** Read-only interface for 32-bit Unicode strings (mutable or immutable)
+- **Use when:** The code needs to handle Unicode and work with either mutable or immutable versions
+- **Benefits:** Direct Unicode support, future-proof
+
+### c. **STRING_32**
+- **Description:** Mutable Unicode (32-bit) string variant
+- **Use when:** You need to modify string content and support Unicode characters
+- **Example:**
+```eiffel
+feature -- Element Change
+
+	uppercase_name (a_name: STRING_32)
+			-- Convert `a_name` to uppercase in place.
+		require
+			name_exists: a_name /= Void
+		do
+			a_name.to_upper
+		ensure
+			is_upper: ∀ i: 1 |..| a_name.count ¦ a_name [i].is_upper or not a_name [i].is_alpha
+		end
+```
+
+### d. **STRING**
+- **Description:** Alias that maps to either `STRING_8` or `STRING_32` depending on configuration
+- **Current behavior:** Most libraries currently map to `STRING_8`
+- **Future behavior:** May default to `STRING_32` for better Unicode support
+- **Recommendation:** Use explicit `STRING_32` for new code requiring Unicode support
+
+### e. **STRING_8**
+- **Description:** Mutable 8-bit (ASCII/Latin-1) string
+- **Use when:** You are certain the text is ASCII/Latin-1 only and need mutability
+- **Limitation:** Cannot represent Unicode characters beyond U+00FF
+
+## Recommended Practices
+
+### 1. **Default Choice: STRING_32**
+For most new code, prefer `STRING_32` for direct Unicode support:
 
 ```eiffel
+feature -- Access
+
+	user_name: STRING_32
+			-- User's name (supports international characters).
+
+	greeting_message (name: STRING_32): STRING_32
+			-- Create greeting for `name`.
+		do
+			create Result.make_empty
+			Result.append ("Hello, ")
+			Result.append (name)
+			Result.append ("!")
+		ensure
+			contains_name: Result.has_substring (name)
+		end
+```
+
+### 2. **For Generic String Parameters: READABLE_STRING_GENERAL**
+When a feature accepts any string type:
+
+```eiffel
+feature -- Validation
+
+	is_valid_identifier (text: READABLE_STRING_GENERAL): BOOLEAN
+			-- Is `text` a valid identifier?
+		do
+			Result := not text.is_empty and then text [1].is_alpha
+		end
+```
+
+### 3. **Output Operations: STRING_32**
+Use `io.put_string_32` for Unicode output:
+
+```eiffel
+feature -- Output
+
+	display_message (msg: STRING_32)
+			-- Display `msg` to standard output.
+		do
+			io.put_string_32 (msg)
+			io.put_new_line
+		end
+```
+
+## UTF Encoding Conversions: UTF_CONVERTER
+
+When you need to convert between different UTF encodings (UTF-8, UTF-16, UTF-32), use the `UTF_CONVERTER` class.
+
+### Key Features
+
+**1. UTF-8 ↔ UTF-32 Conversion:**
+```eiffel
+feature -- Conversion
+
+	convert_utf8_to_string (utf8_data: STRING_8): STRING_32
+			-- Convert UTF-8 encoded `utf8_data` to STRING_32.
+		local
+			converter: UTF_CONVERTER
+		do
+			create converter
+			Result := converter.utf_8_string_8_to_string_32 (utf8_data)
+		ensure
+			valid_roundtrip: converter.is_valid_utf_8_string_8 (utf8_data) implies
+				converter.utf_32_string_to_utf_8_string_8 (Result).same_string (utf8_data)
+		end
+
+	convert_string_to_utf8 (text: STRING_32): STRING_8
+			-- Convert `text` to UTF-8 encoding.
+		local
+			converter: UTF_CONVERTER
+		do
+			create converter
+			Result := converter.string_32_to_utf_8_string_8 (text)
+		ensure
+			roundtrip: converter.utf_8_string_8_to_string_32 (Result).same_string (text)
+		end
+```
+
+**2. UTF-16 ↔ UTF-32 Conversion:**
+```eiffel
+feature -- UTF-16 Handling
+
+	convert_utf16_to_string (utf16_data: STRING_8): STRING_32
+			-- Convert UTF-16LE encoded `utf16_data` to STRING_32.
+		require
+			even_count: (utf16_data.count & 1) = 0
+		local
+			converter: UTF_CONVERTER
+		do
+			create converter
+			Result := converter.utf_16le_string_8_to_string_32 (utf16_data)
+		end
+
+	convert_string_to_utf16 (text: STRING_32): STRING_8
+			-- Convert `text` to UTF-16LE encoding.
+		local
+			converter: UTF_CONVERTER
+		do
+			create converter
+			Result := converter.utf_32_string_to_utf_16le_string_8 (text)
+		end
+```
+
+**3. Validation:**
+```eiffel
+feature -- Validation
+
+	is_valid_utf8 (data: STRING_8): BOOLEAN
+			-- Is `data` a valid UTF-8 sequence?
+		local
+			converter: UTF_CONVERTER
+		do
+			create converter
+			Result := converter.is_valid_utf_8_string_8 (data)
+		end
+```
+
+**4. Escaped String Handling:**
+
+The `UTF_CONVERTER` provides "escaped" variants that handle invalid UTF sequences by using a replacement character (U+FFFD) followed by hexadecimal codes. This enables roundtrip conversion even with invalid encodings.
+
+```eiffel
+feature -- Escaped Conversion
+
+	safe_utf8_conversion (data: STRING_8): STRING_32
+			-- Convert UTF-8 `data` to STRING_32, escaping invalid sequences.
+		local
+			converter: UTF_CONVERTER
+		do
+			create converter
+			Result := converter.utf_8_string_8_to_escaped_string_32 (data)
+		ensure
+			roundtrip: converter.escaped_utf_32_string_to_utf_8_string_8 (Result).same_string (data)
+		end
+```
+
+### Byte Order Mark (BOM) Constants
+
+```eiffel
+feature -- BOM Detection
+
+	detect_utf_encoding (data: STRING_8): STRING
+			-- Detect UTF encoding from BOM.
+		local
+			converter: UTF_CONVERTER
+		do
+			create converter
+			if data.starts_with (converter.utf_8_bom_to_string_8) then
+				Result := "UTF-8"
+			elseif data.starts_with (converter.utf_16le_bom_to_string_8) then
+				Result := "UTF-16LE"
+			elseif data.starts_with (converter.utf_16be_bom_to_string_8) then
+				Result := "UTF-16BE"
+			elseif data.starts_with (converter.utf_32le_bom_to_string_8) then
+				Result := "UTF-32LE"
+			elseif data.starts_with (converter.utf_32be_bom_to_string_8) then
+				Result := "UTF-32BE"
+			else
+				Result := "Unknown"
+			end
+		end
+```
+
+## Complete Example
+
+```eiffel
+note
+	description: "Demonstrates string handling and UTF conversion."
+
+class
+	TEXT_PROCESSOR
+
+create
+	make
+
+feature -- Initialization
+
+	make
+			-- Initialize processor.
+		do
+			create converter
+		end
+
+feature -- Access
+
+	converter: UTF_CONVERTER
+			-- UTF encoding converter.
+
+feature -- Processing
+
+	process_multilingual_text (text: STRING_32): STRING_32
+			-- Process `text` with Unicode support.
+		require
+			text_exists: text /= Void
+		local
+			temp: STRING_32
+		do
+			create Result.make_from_string (text)
+			Result.to_upper
+			Result.prepend ("Processed: ")
+		ensure
+			has_prefix: Result.starts_with ("Processed: ")
+		end
+
+	load_utf8_file_content (utf8_content: STRING_8): STRING_32
+			-- Convert UTF-8 file content to STRING_32.
+		require
+			valid_utf8: converter.is_valid_utf_8_string_8 (utf8_content)
+		do
+			Result := converter.utf_8_string_8_to_string_32 (utf8_content)
+		ensure
+			roundtrip: converter.string_32_to_utf_8_string_8 (Result).same_string (utf8_content)
+		end
+
+	save_as_utf8 (text: STRING_32): STRING_8
+			-- Convert `text` to UTF-8 for file storage.
+		require
+			text_exists: text /= Void
+		do
+			Result := converter.string_32_to_utf_8_string_8 (text)
+		ensure
+			roundtrip: converter.utf_8_string_8_to_string_32 (Result).same_string (text)
+		end
+
+invariant
+	converter_exists: converter /= Void
+
+end
+```
+
+## Rules Summary
+
+1. **Prefer STRING_32** for new code to ensure Unicode support
+2. **Use READABLE_STRING_GENERAL** for formal arguments accepting any string variant
+3. **Use UTF_CONVERTER** for encoding conversions between UTF-8, UTF-16, and UTF-32
+4. **Use `io.put_string_32`** for Unicode output to standard output
+5. **Validate UTF sequences** before conversion using `is_valid_utf_8_string_8` and similar features
+6. **Use escaped variants** when you need guaranteed roundtrip conversion with potentially invalid encodings
+7. **Be aware** that `STRING` may map to either `STRING_8` or `STRING_32` depending on library configuration
+
+---
+
+# 17. Example (Reference)
+
+```eiffel
+note
+	description: "Represents a person with name and age."
+
 class
 	PERSON
 
 create
 	make
-
-note
-	description: "Represents a person with name and age."
 
 feature -- Initialization
 
