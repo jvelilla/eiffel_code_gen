@@ -453,10 +453,28 @@ find_index (target: INTEGER): INTEGER
 **Reference:** [Loop Invariants and Variants](https://www.eiffel.org/doc/eiffel/ET-_Instructions#Loop_invariants_and_variants)
 
 Rules:
-- Preconditions may be **weakened** in subclasses.  
-- Postconditions may be **strengthened**.  
+- Preconditions may be **weakened** in subclasses. `require else` 
+- Postconditions may be **strengthened**.   `ensure then`
 - Invariants must always hold around exported features.  
 - Assertions must be **labeled**.
+
+
+### DbC Principles:  How to write Contracts?
+- `Separate command and queries`: Queries return a result, doesn't change the state of the object. Commands might change the state of the object, do not return a result.
+- `Separate basic queries from derived queries`: Derived queries can be specified in terms of basic queries.
+- `For each derived query, write a postcondition that specify what result will be returned in term of one or more queries`: If we know the values of the basic queries we also know the values of the derived ones.
+- `For each command, write a postcondition that specifies the value of every basic query`: Taken together with the principle of `defining derived queries in term of basic queries`, this means that now we know the total visible effect of each command.
+- `For every query and command, decide on a suitable precondition`: Preconditions constrain when clients may call the queries and commands.
+- `Write invariants to define unchanging properties of objects`: Concentrate on properties that help the reader build 
+an appropriate conceptual model of the abstraction that the class embodies.
+
+
+### DbC Guidelines
+- `Add physical constraints where appropriate`: Typically these will be constraints that variables should not be Void.
+- `Make sure that queries used in preconditions are cheap to calculate`: If needed, add a cheap-to-calculate derived queries whose postconditions verify them against more expensive ones.
+- `Constraint attributes using an invariant`: When a derived query is implemented as an attribute, it can be constrained to be consistent with other queries by an assertion in the class's invariant section
+- `To support redefinition of features, guard each postcondition clause with it's corresponding precondition`: This allows unforeseen redefinitions by those developing subclasses.
+- `Place constraints on desired changes and frame rules in separate classes`: This allows developers more freedom to redefine features in subclasses.
 
 ---
 
@@ -523,7 +541,8 @@ end
 ```
 
 **Symbolic Loops (Quantifier Forms) - Optional:**
-Symbolic loops use quantifier notation and are **optional** but **preferred** for use in preconditions, postconditions, and invariants.
+[Symbolic loops]((https://www.eiffel.org/blog/Alexander%20Kogtenkov/2020/03/symbolic-forms-loops) use quantifier notation and are **optional** but **preferred** for use in preconditions, postconditions, and invariants.
+
 
 ```eiffel
 -- Universal quantifier (all elements satisfy condition)
@@ -576,6 +595,7 @@ invariant
 - Works with arrays, lists, hash tables, intervals, and any class implementing `ITERABLE`.
 - Symbolic loops are **optional** but recommended for assertions (preconditions, postconditions, invariants).
 - Use regular `across ... loop ... end` syntax for executable code in routine bodies.
+
 
 **Reference:** [EiffelStudio 21.11 Release Notes](https://www.eiffel.org/doc/eiffelstudio/Release_notes_for_EiffelStudio_21.11)
 
@@ -881,32 +901,8 @@ LLM MUST NEVER:
 
 ---
 
-# 14. Ask Before Coding
 
-If the spec is ambiguous, the model must ask clarifying questions before generating Eiffel code.
-
----
-
-# 15. Final Checklist (LLM MUST verify before generating)
-
-- [ ] Class name is UPPERCASE  
-- [ ] Feature names in snake_case  
-- [ ] Proper class template used  
-- [ ] Preconditions & postconditions included and labeled  
-- [ ] Invariant included (if applicable)  
-- [ ] All indentation uses TABs  
-- [ ] Comments concise  
-- [ ] No pseudo-eiffel  
-- [ ] Command–Query separation preserved  
-- [ ] No missing types  
-- [ ] No unnecessary `/= Void` checks for attached types  
-- [ ] `detachable` used only when `Void` is a valid value  
-- [ ] Special characters in strings use proper escape sequences (`%N`, `%T`, `%"`, etc.)  
-- [ ] Once classes have `once` keyword before `class` and all creation procedures are once procedures  
-
----
-
-# 16. Working with Strings
+# 14. Working with Strings
 
 Eiffel provides multiple string classes to handle different character encodings and mutability requirements. Understanding when to use each type is essential for writing correct and efficient string-handling code.
 
@@ -1203,6 +1199,30 @@ end
 5. **Validate UTF sequences** before conversion using `is_valid_utf_8_string_8` and similar features
 6. **Use escaped variants** when you need guaranteed roundtrip conversion with potentially invalid encodings
 7. **Be aware** that `STRING` may map to either `STRING_8` or `STRING_32` depending on library configuration
+
+---
+# 15. Ask Before Coding
+
+If the spec is ambiguous, the model must ask clarifying questions before generating Eiffel code.
+
+---
+# 16. Final Checklist (LLM MUST verify before generating)
+
+- [ ] Class name is UPPERCASE  
+- [ ] Feature names in snake_case  
+- [ ] Proper class template used  
+- [ ] Preconditions & postconditions included and labeled  
+- [ ] Invariant included (if applicable)  
+- [ ] All indentation uses TABs  
+- [ ] Comments concise  
+- [ ] No pseudo-eiffel  
+- [ ] Command–Query separation preserved  
+- [ ] No missing types  
+- [ ] No unnecessary `/= Void` checks for attached types  
+- [ ] `detachable` used only when `Void` is a valid value  
+- [ ] Special characters in strings use proper escape sequences (`%N`, `%T`, `%"`, etc.)  
+- [ ] Once classes have `once` keyword before `class` and all creation procedures are once procedures  
+
 
 ---
 
