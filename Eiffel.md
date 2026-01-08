@@ -39,6 +39,33 @@ Rules:
 - Space after commas: `f (a, b)`.  
 - No space around dot calls: `list.count`.  
 - Comments start with `-- ` (two dashes and a space).
+- **Inline comments must be indented** to match the indentation level of the code they describe.
+
+### Comment Indentation Example:
+
+**Incorrect (left-aligned):**
+```eiffel
+do
+	create Result.make (4096)
+	
+-- PDF header
+	Result.append ("%%PDF-1.7%N")
+-- Binary comment
+	Result.append ("%%%/0xE4/%/0xF0/%/0xD3/%/0xFA/%N")
+end
+```
+
+**Correct (indented):**
+```eiffel
+do
+	create Result.make (4096)
+	
+	    -- PDF header
+	Result.append ("%%PDF-1.7%N")
+	    -- Binary comment (4 bytes > 127 per ISO 32000-1 Section 7.5.2)
+	Result.append ("%%%/0xE4/%/0xF0/%/0xD3/%/0xFA/%N")
+end
+```
 
 Grouping of feature clauses:
 
@@ -871,6 +898,22 @@ integrator.integrate (agent function3 (3.5, ?, 6.0), 0.0, 1.0)
 - Precursor comments are supported in all EiffelStudio tools (Contract Viewer, Feature Relation Tool, documentation generators).  
 - Using `-- <Precursor>` ensures inherited documentation is visible and consistent.
 
+### f. **Example**
+
+```eiffel
+
+feature -- Access
+
+    do_something (a_arg: INTEGER)
+        	-- <Precursor>
+    	do
+				-- Add some comment
+        	instruction 
+			instruction 
+		end
+
+end
+
 **Reference:** [Eiffel Code  Comments](https://www.eiffel.org/doc/eiffel/Eiffel_Code_Comments)
 ---
 
@@ -1199,14 +1242,34 @@ end
 5. **Validate UTF sequences** before conversion using `is_valid_utf_8_string_8` and similar features
 6. **Use escaped variants** when you need guaranteed roundtrip conversion with potentially invalid encodings
 7. **Be aware** that `STRING` may map to either `STRING_8` or `STRING_32` depending on library configuration
+8. **Use `detachable`** when a feature may return `Void`
 
 ---
-# 15. Ask Before Coding
+# 15. Compilation & Verification Commands
+Use these commands to verify changes (replace <PROJECT_NAME> with the detected name):
+
+- Compile Main:
+  ec -config <PROJECT_NAME>.ecf -target <PROJECT_NAME> [-clean] -c_compile -finalize
+	-- Use -clean to delete previous build and perform a fresh compilation.
+
+- Compile & Run Tests (with AutoTest):
+  ec -config <PROJECT_NAME>.ecf -target tests -c_compile -finalize -tests 
+	-- Use -clean to delete previous build and perform a fresh compilation.
+
+
+## Compilation Rules
+
+- Use -clean to delete previous build and perform a fresh compilation.
+- Use -finalize to finalize the build.
+- Use -tests to run tests. (AutoTest doesn't have a filter to run an specific test)
+
+---
+# 16. Ask Before Coding
 
 If the spec is ambiguous, the model must ask clarifying questions before generating Eiffel code.
 
 ---
-# 16. Final Checklist (LLM MUST verify before generating)
+# 17. Final Checklist (LLM MUST verify before generating)
 
 - [ ] Class name is UPPERCASE  
 - [ ] Feature names in snake_case  
@@ -1222,11 +1285,11 @@ If the spec is ambiguous, the model must ask clarifying questions before generat
 - [ ] `detachable` used only when `Void` is a valid value  
 - [ ] Special characters in strings use proper escape sequences (`%N`, `%T`, `%"`, etc.)  
 - [ ] Once classes have `once` keyword before `class` and all creation procedures are once procedures  
-
+- [ ] Allways use the compiler to double check the generated code.
 
 ---
 
-# 17. Example (Reference)
+# 18. Example (Reference)
 
 ```eiffel
 note
